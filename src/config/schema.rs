@@ -156,7 +156,6 @@ pub struct GoogleOAuthConfig {
     pub quota_cooldown_max_secs: u64,
 }
 
-
 fn default_quota_cooldown_base() -> u64 {
     60
 }
@@ -1017,7 +1016,7 @@ pub struct SandboxConfig {
 impl Default for SandboxConfig {
     fn default() -> Self {
         Self {
-            enabled: None,  // Auto-detect
+            enabled: None, // Auto-detect
             backend: SandboxBackend::Auto,
             firejail_args: Vec::new(),
         }

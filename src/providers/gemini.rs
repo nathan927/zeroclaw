@@ -59,8 +59,7 @@ impl QuotaTracker {
             .saturating_mul(1u64 << self.consecutive_errors.min(10).saturating_sub(1))
             .min(max_secs);
 
-        self.cooldown_until =
-            Some(Instant::now() + std::time::Duration::from_secs(backoff_secs));
+        self.cooldown_until = Some(Instant::now() + std::time::Duration::from_secs(backoff_secs));
     }
 
     /// Record a successful request; reset error counters.
@@ -92,7 +91,6 @@ pub struct GeminiProvider {
     cooldown_max_secs: u64,
 }
 
-
 /// Resolved credential — the variant determines both the HTTP auth method
 /// and the diagnostic label returned by `auth_source()`.
 #[derive(Debug)]
@@ -112,7 +110,6 @@ enum GeminiAuth {
     /// Google OAuth credential with auto-refresh (from `zeroclaw google-auth`).
     GoogleOAuth(Mutex<OAuthCredential>),
 }
-
 
 impl GeminiAuth {
     /// Whether this credential is an API key (sent as `?key=` query param).
@@ -135,9 +132,7 @@ impl GeminiAuth {
             | GeminiAuth::ProfileApiKey(s)
             | GeminiAuth::ProfileOAuth(s)
             | GeminiAuth::OAuthToken(s) => s.clone(),
-            GeminiAuth::GoogleOAuth(cred) => {
-                cred.lock().unwrap().access_token.clone()
-            }
+            GeminiAuth::GoogleOAuth(cred) => cred.lock().unwrap().access_token.clone(),
         }
     }
 
@@ -296,7 +291,6 @@ impl GeminiProvider {
         }
     }
 
-
     fn normalize_non_empty(value: &str) -> Option<String> {
         let trimmed = value.trim();
         if trimmed.is_empty() {
@@ -366,7 +360,13 @@ impl GeminiProvider {
             serde_json::Value::Array(items) => items.iter().collect(),
             serde_json::Value::Object(map) => {
                 let mut collected = Vec::new();
-                for key in ["profiles", "accounts", "auth_profiles", "authProfiles", "providers"] {
+                for key in [
+                    "profiles",
+                    "accounts",
+                    "auth_profiles",
+                    "authProfiles",
+                    "providers",
+                ] {
                     if let Some(value) = map.get(key) {
                         collected.extend(Self::collect_profile_values(value));
                     }
@@ -605,7 +605,6 @@ impl GeminiProvider {
         }
     }
 
-
     fn format_model_name(model: &str) -> String {
         if model.starts_with("models/") {
             model.to_string()
@@ -716,10 +715,8 @@ impl Provider for GeminiProvider {
                 if status.as_u16() == 429 {
                     if let Ok(mut trackers) = self.quota_trackers.lock() {
                         if idx < trackers.len() {
-                            trackers[idx].record_rate_limit(
-                                self.cooldown_base_secs,
-                                self.cooldown_max_secs,
-                            );
+                            trackers[idx]
+                                .record_rate_limit(self.cooldown_base_secs, self.cooldown_max_secs);
                             tracing::warn!(
                                 auth_index = idx,
                                 auth_type = auth.label(),
@@ -872,10 +869,7 @@ mod tests {
 
     #[test]
     fn auth_source_explicit_key() {
-        let provider = test_provider(
-            vec![GeminiAuth::ExplicitKey("key".into())],
-            "config",
-        );
+        let provider = test_provider(vec![GeminiAuth::ExplicitKey("key".into())], "config");
         assert_eq!(provider.auth_source(), "config");
     }
 
@@ -1187,17 +1181,35 @@ mod tests {
     #[test]
     fn gemini_auth_label_variants() {
         assert_eq!(GeminiAuth::ExplicitKey("k".into()).label(), "explicit-key");
-        assert_eq!(GeminiAuth::EnvGeminiKey("k".into()).label(), "GEMINI_API_KEY");
-        assert_eq!(GeminiAuth::EnvGoogleKey("k".into()).label(), "GOOGLE_API_KEY");
-        assert_eq!(GeminiAuth::ProfileApiKey("k".into()).label(), "profile-api-key");
-        assert_eq!(GeminiAuth::ProfileOAuth("t".into()).label(), "profile-oauth");
-        assert_eq!(GeminiAuth::OAuthToken("t".into()).label(), "gemini-cli-oauth");
+        assert_eq!(
+            GeminiAuth::EnvGeminiKey("k".into()).label(),
+            "GEMINI_API_KEY"
+        );
+        assert_eq!(
+            GeminiAuth::EnvGoogleKey("k".into()).label(),
+            "GOOGLE_API_KEY"
+        );
+        assert_eq!(
+            GeminiAuth::ProfileApiKey("k".into()).label(),
+            "profile-api-key"
+        );
+        assert_eq!(
+            GeminiAuth::ProfileOAuth("t".into()).label(),
+            "profile-oauth"
+        );
+        assert_eq!(
+            GeminiAuth::OAuthToken("t".into()).label(),
+            "gemini-cli-oauth"
+        );
     }
 
     #[test]
     fn gemini_auth_credential_returns_value() {
         assert_eq!(GeminiAuth::ExplicitKey("abc".into()).credential(), "abc");
-        assert_eq!(GeminiAuth::OAuthToken("ya29.tok".into()).credential(), "ya29.tok");
+        assert_eq!(
+            GeminiAuth::OAuthToken("ya29.tok".into()).credential(),
+            "ya29.tok"
+        );
     }
 
     #[test]

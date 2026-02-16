@@ -183,7 +183,9 @@ impl GoogleOAuthClient {
             .context("Google did not return a refresh token")?;
 
         // Step 4: Fetch user email
-        let email = self.fetch_user_email(&token_resp.access_token).await
+        let email = self
+            .fetch_user_email(&token_resp.access_token)
+            .await
             .unwrap_or_else(|_| "unknown@gmail.com".to_string());
 
         println!();
@@ -230,8 +232,7 @@ impl GoogleOAuthClient {
         interval: u64,
         expires_in: u64,
     ) -> Result<TokenResponse> {
-        let deadline =
-            tokio::time::Instant::now() + std::time::Duration::from_secs(expires_in);
+        let deadline = tokio::time::Instant::now() + std::time::Duration::from_secs(expires_in);
         let mut poll_interval = std::time::Duration::from_secs(interval);
 
         loop {
@@ -274,9 +275,7 @@ impl GoogleOAuthClient {
                         anyhow::bail!("User denied the authorization request");
                     }
                     "expired_token" => {
-                        anyhow::bail!(
-                            "Device code expired — please try again"
-                        );
+                        anyhow::bail!("Device code expired — please try again");
                     }
                     other => {
                         anyhow::bail!("Token polling error: {other}");
@@ -379,12 +378,10 @@ impl OAuthTokenStore {
         let path = Self::default_path().context("Cannot determine home directory")?;
 
         if let Some(parent) = path.parent() {
-            std::fs::create_dir_all(parent)
-                .context("Failed to create config directory")?;
+            std::fs::create_dir_all(parent).context("Failed to create config directory")?;
         }
 
-        let json = serde_json::to_string_pretty(self)
-            .context("Failed to serialize token store")?;
+        let json = serde_json::to_string_pretty(self).context("Failed to serialize token store")?;
 
         std::fs::write(&path, json).context("Failed to write token store")?;
 
@@ -530,7 +527,11 @@ fn show_status() -> Result<()> {
         println!("  帳戶:      {}", cred.email);
         println!(
             "  Token 狀態: {}",
-            if expired { "⚠️  已過期" } else { "✅ 有效" }
+            if expired {
+                "⚠️  已過期"
+            } else {
+                "✅ 有效"
+            }
         );
         println!(
             "  到期時間:   {}",
@@ -547,10 +548,7 @@ fn show_status() -> Result<()> {
         println!();
     }
 
-    println!(
-        "共 {} 個帳戶，用於 Gemini API 配額輪換。",
-        store.count()
-    );
+    println!("共 {} 個帳戶，用於 Gemini API 配額輪換。", store.count());
 
     Ok(())
 }
@@ -601,7 +599,10 @@ mod tests {
 
         // Set expiry to within 5 minutes (should count as expired)
         cred.expires_at = Utc::now() + Duration::minutes(3);
-        assert!(cred.is_expired(), "Token expiring in 3 min should count as expired");
+        assert!(
+            cred.is_expired(),
+            "Token expiring in 3 min should count as expired"
+        );
     }
 
     #[test]
