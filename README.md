@@ -14,6 +14,10 @@
   <a href="https://buymeacoffee.com/argenistherose"><img src="https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Donate-yellow.svg?style=flat&logo=buy-me-a-coffee" alt="Buy Me a Coffee" /></a>
 </p>
 
+<p align="center">
+  <strong>English</strong> · <a href="README.zh-TW.md">繁體中文</a>
+</p>
+
 Fast, small, and fully autonomous AI assistant infrastructure — deploy anywhere, swap anything.
 
 ```
@@ -114,6 +118,55 @@ zeroclaw migrate openclaw
 ```
 
 > **Dev fallback (no global install):** prefix commands with `cargo run --release --` (example: `cargo run --release -- status`).
+
+### Upgrade Existing Installation
+
+```bash
+cargo install --git https://github.com/nathan927/zeroclaw.git --force
+```
+
+## Google OAuth Login & Quota Rotation
+
+ZeroClaw supports **Google OAuth Device Flow** authentication for the Gemini provider — no API key required. When multiple accounts are configured, requests are automatically rotated with **quota-aware load balancing**.
+
+### Login with Google
+
+```bash
+zeroclaw google-auth login
+```
+
+This starts the OAuth Device Flow:
+1. A URL and verification code are displayed in the terminal
+2. Open the URL in your browser and enter the code
+3. Token is saved to `~/.zeroclaw/google-oauth-tokens.json`
+
+Repeat `login` to add multiple Google accounts.
+
+### How It Works
+
+- **Zero config required** — tokens are automatically loaded by `GeminiProvider`
+- **Auto-refresh** — expired tokens are refreshed transparently
+- **Quota-aware rotation** — on 429 rate limit, the account enters cooldown with exponential backoff, and the next available account is used
+- **Backward compatible** — existing API key users are unaffected; OAuth is the lowest priority auth source
+
+### Auth Priority Order
+
+| Priority | Source | How |
+|---|---|---|
+| 1 | Config `api_key` | `config.toml` |
+| 2 | `GEMINI_API_KEY` env var | Environment |
+| 3 | `GOOGLE_API_KEY` env var | Environment |
+| 4 | `auth-profiles.json` | Multi-key profiles |
+| 5 | **Google OAuth tokens** | `zeroclaw google-auth login` |
+| 6 | Gemini CLI tokens | `~/.gemini/oauth_creds.json` |
+
+### Manage Accounts
+
+```bash
+zeroclaw google-auth list      # List all logged-in accounts
+zeroclaw google-auth status    # Show token status and expiry
+zeroclaw google-auth remove    # Remove a specific account
+```
 
 ## Architecture
 
@@ -312,6 +365,13 @@ enabled = false                 # opt-in: 1000+ OAuth apps via composio.dev
 format = "openclaw"             # "openclaw" (default, markdown files) or "aieos" (JSON)
 # aieos_path = "identity.json"  # path to AIEOS JSON file (relative to workspace or absolute)
 # aieos_inline = '{"identity":{"names":{"first":"Nova"}}}'  # inline AIEOS JSON
+
+[google_oauth]
+enabled = true                  # Enable Google OAuth for Gemini provider
+# client_id = "..."             # Custom OAuth client ID (optional)
+# client_secret = "..."         # Custom OAuth client secret (optional)
+quota_cooldown_base_secs = 60   # Base cooldown after 429 rate limit
+quota_cooldown_max_secs = 900   # Max cooldown (exponential backoff cap)
 ```
 
 ## Identity System (AIEOS Support)
@@ -408,6 +468,10 @@ See [aieos.org](https://aieos.org) for the full schema and live examples.
 | `doctor` | Diagnose daemon/scheduler/channel freshness |
 | `status` | Show full system status |
 | `channel doctor` | Run health checks for configured channels |
+| `google-auth login` | Login with Google OAuth (Device Flow) |
+| `google-auth list` | List all logged-in Google accounts |
+| `google-auth status` | Show token status and expiry |
+| `google-auth remove` | Remove a Google account |
 | `integrations info <name>` | Show setup/status details for one integration |
 
 ## Development
