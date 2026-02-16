@@ -197,6 +197,21 @@ enum Commands {
         #[command(subcommand)]
         migrate_command: MigrateCommands,
     },
+
+    /// Authenticate with Google OAuth for Gemini API access
+    GoogleAuth {
+        /// List authenticated Google accounts
+        #[arg(long)]
+        list: bool,
+
+        /// Remove an authenticated account by email
+        #[arg(long)]
+        remove: Option<String>,
+
+        /// Show token status and quota info
+        #[arg(long)]
+        status: bool,
+    },
 }
 
 #[derive(Subcommand, Debug)]
@@ -450,6 +465,21 @@ async fn main() -> Result<()> {
 
         Commands::Migrate { migrate_command } => {
             migration::handle_command(migrate_command, &config).await
+        }
+
+        Commands::GoogleAuth {
+            list,
+            remove,
+            status,
+        } => {
+            providers::google_oauth::handle_google_auth(
+                list,
+                remove,
+                status,
+                config.google_oauth.client_id.as_deref(),
+                config.google_oauth.client_secret.as_deref(),
+            )
+            .await
         }
     }
 }

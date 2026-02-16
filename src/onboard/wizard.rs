@@ -112,6 +112,7 @@ pub fn run_wizard() -> Result<Config> {
         http_request: crate::config::HttpRequestConfig::default(),
         identity: crate::config::IdentityConfig::default(),
         hardware: hardware_config,
+        google_oauth: crate::config::GoogleOAuthConfig::default(),
         agents: std::collections::HashMap::new(),
         security: crate::config::SecurityConfig::default(),
     };
@@ -307,6 +308,7 @@ pub fn run_quick_setup(
         http_request: crate::config::HttpRequestConfig::default(),
         identity: crate::config::IdentityConfig::default(),
         hardware: HardwareConfig::default(),
+        google_oauth: crate::config::GoogleOAuthConfig::default(),
         agents: std::collections::HashMap::new(),
         security: crate::config::SecurityConfig::default(),
     };

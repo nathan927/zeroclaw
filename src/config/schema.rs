@@ -74,6 +74,9 @@ pub struct Config {
     #[serde(default)]
     pub hardware: crate::hardware::HardwareConfig,
 
+    #[serde(default)]
+    pub google_oauth: GoogleOAuthConfig,
+
     /// Named delegate agents for agent-to-agent handoff.
     ///
     /// ```toml
@@ -120,6 +123,56 @@ impl Default for IdentityConfig {
             format: default_identity_format(),
             aieos_path: None,
             aieos_inline: None,
+        }
+    }
+}
+
+// ── Google OAuth ─────────────────────────────────────────────────
+
+/// Configuration for Google OAuth device flow login and quota rotation.
+///
+/// ```toml
+/// [google_oauth]
+/// enabled = true
+/// quota_cooldown_base_secs = 60
+/// quota_cooldown_max_secs = 900
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GoogleOAuthConfig {
+    /// Enable Google OAuth device flow login for Gemini API.
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+    /// Custom OAuth client ID (defaults to Gemini CLI's public client ID).
+    #[serde(default)]
+    pub client_id: Option<String>,
+    /// Custom OAuth client secret.
+    #[serde(default)]
+    pub client_secret: Option<String>,
+    /// Base cooldown (seconds) after a 429 rate limit, default: 60.
+    #[serde(default = "default_quota_cooldown_base")]
+    pub quota_cooldown_base_secs: u64,
+    /// Max cooldown (seconds) for exponential backoff, default: 900 (15 min).
+    #[serde(default = "default_quota_cooldown_max")]
+    pub quota_cooldown_max_secs: u64,
+}
+
+
+fn default_quota_cooldown_base() -> u64 {
+    60
+}
+
+fn default_quota_cooldown_max() -> u64 {
+    900
+}
+
+impl Default for GoogleOAuthConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            client_id: None,
+            client_secret: None,
+            quota_cooldown_base_secs: default_quota_cooldown_base(),
+            quota_cooldown_max_secs: default_quota_cooldown_max(),
         }
     }
 }
@@ -1116,6 +1169,7 @@ impl Default for Config {
             http_request: HttpRequestConfig::default(),
             identity: IdentityConfig::default(),
             hardware: crate::hardware::HardwareConfig::default(),
+            google_oauth: GoogleOAuthConfig::default(),
             agents: HashMap::new(),
             security: SecurityConfig::default(),
         }
@@ -1470,6 +1524,7 @@ mod tests {
             http_request: HttpRequestConfig::default(),
             identity: IdentityConfig::default(),
             hardware: crate::hardware::HardwareConfig::default(),
+            google_oauth: GoogleOAuthConfig::default(),
             agents: HashMap::new(),
             security: SecurityConfig::default(),
         };
@@ -1545,6 +1600,7 @@ default_temperature = 0.7
             http_request: HttpRequestConfig::default(),
             identity: IdentityConfig::default(),
             hardware: crate::hardware::HardwareConfig::default(),
+            google_oauth: GoogleOAuthConfig::default(),
             agents: HashMap::new(),
             security: SecurityConfig::default(),
         };

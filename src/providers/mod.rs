@@ -1,6 +1,7 @@
 pub mod anthropic;
 pub mod compatible;
 pub mod gemini;
+pub mod google_oauth;
 pub mod ollama;
 pub mod openai;
 pub mod openrouter;

@@ -57,11 +57,7 @@ mod tests {
 
             let dest_link = skills_path.join("linked_skill");
 
-            // Symlink should fail on non-Unix
-            let result = std::os::unix::fs::symlink(&source_dir, &dest_link);
-            assert!(result.is_err());
-
-            // Directory should not exist
+            // On non-Unix, unix symlinks are unavailable; verify dest does not exist
             assert!(!dest_link.exists());
         }
 

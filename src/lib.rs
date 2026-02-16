@@ -163,3 +163,19 @@ pub enum IntegrationCommands {
         name: String,
     },
 }
+
+/// Google OAuth authentication subcommands
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum GoogleAuthCommands {
+    /// Start device flow login with Google account
+    Login,
+    /// List authenticated Google accounts
+    List,
+    /// Remove an authenticated account by email
+    Remove {
+        /// Account email to remove
+        email: String,
+    },
+    /// Show token status and quota info
+    Status,
+}
